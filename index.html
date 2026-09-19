@@ -1,33 +1,81 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-periode="jour">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Heures Temporaires — Québec</title>
+<meta name="color-scheme" content="light dark">
+<title>Heures temporaires — Québec</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23faf6ef'/%3E%3Cpath d='M16 3a13 13 0 0 1 0 26z' fill='%23ecd9b8'/%3E%3Cpath d='M16 29a13 13 0 0 1 0-26z' fill='%23c9d0de'/%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%238b5e3c' stroke-width='1.2'/%3E%3Ccircle cx='27' cy='12' r='3' fill='%23d4a843'/%3E%3C/svg%3E">
 <style>
+  /* ---------------------------------------------------------------------------
+   * Deux palettes, et la page passe de l'une à l'autre au lever et au coucher.
+   * C'était déjà l'intention de la version originale (classe night-mode), mais
+   * seul le texte changeait : la nuit, il devenait beige sur fond crème.
+   * ------------------------------------------------------------------------ */
   :root {
-    --sable: #e8d5b7;
-    --ocre: #c4956a;
-    --ocre-fonce: #8b5e3c;
-    --brun: #5a3a1a;
-    --nuit: #1a2744;
-    --nuit-clair: #2d4a7a;
-    --or: #d4a843;
-    --blanc-casse: #faf6ef;
-    --gris-chaud: #a89279;
+    --fond: #faf6ef;
+    --encre: #5a3a1a;
+    --accent: #8b5e3c;
+    --doux: #a08a70;
+    --filet: #d8c8ae;
+    --filet-doux: #e9dfcd;
+    --piste: #efe6d6;
+    --soleil: #d4a843;
+    --lune: #e4e9f3;
+
+    --bande-jour: #f1e3c9;
+    --bande-nuit: #dfe3ec;
+    --passe-jour: #e8cf9f;
+    --passe-nuit: #c7cfe0;
+    --courant-jour: #d9b36c;
+    --courant-nuit: #9dadcc;
+    --chiffre-jour: #8b5e3c;
+    --chiffre-nuit: #56688f;
+
+    --ligne-active: #f1e3c9;
+    --titre-jour: #8b5e3c;
+    --titre-nuit: #3c5383;
+  }
+
+  :root[data-periode="nuit"] {
+    --fond: #141b2e;
+    --encre: #e8d5b7;
+    --accent: #e0bd6a;
+    --doux: #8795b4;
+    --filet: #2f3a57;
+    --filet-doux: #222b44;
+    --piste: #222b44;
+    --soleil: #d4a843;
+    --lune: #e4e9f3;
+
+    --bande-jour: #2a2d38;
+    --bande-nuit: #1f2a47;
+    --passe-jour: #3a3a3c;
+    --passe-nuit: #2c3b63;
+    --courant-jour: #6b5a36;
+    --courant-nuit: #4a5f93;
+    --chiffre-jour: #9c8a6c;
+    --chiffre-nuit: #aab8d8;
+
+    --ligne-active: #25325a;
+    --titre-jour: #b89a6c;
+    --titre-nuit: #aab8d8;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html { background: var(--fond); transition: background-color 1.2s ease; }
+
   body {
-    font-family: 'Georgia', 'Times New Roman', serif;
-    background: var(--blanc-casse);
-    color: var(--brun);
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--fond);
+    color: var(--encre);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1.5rem 1rem;
+    padding: 2rem 16px 1.5rem;
+    transition: background-color 1.2s ease, color 1.2s ease;
   }
 
   h1 {
@@ -35,773 +83,493 @@
     font-weight: normal;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--ocre-fonce);
-    margin-bottom: 0.25rem;
+    color: var(--accent);
     text-align: center;
   }
 
-  .subtitle {
+  .lieu {
     font-size: 0.85rem;
-    color: var(--gris-chaud);
+    color: var(--doux);
     letter-spacing: 0.08em;
-    margin-bottom: 1.5rem;
+    margin: 0.25rem 0 1.4rem;
     text-align: center;
   }
 
-  .info-bar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.2rem;
-    font-size: 0.85rem;
-    color: var(--ocre-fonce);
-    margin-bottom: 1.5rem;
+  .date {
+    font-size: 1rem;
+    text-align: center;
+    color: var(--encre);
   }
 
-  .info-bar span { white-space: nowrap; }
+  .soleil-infos {
+    font-size: 0.85rem;
+    color: var(--doux);
+    text-align: center;
+    margin: 0.3rem 0 1rem;
+  }
+  .soleil-infos strong { color: var(--accent); font-weight: normal; }
+  .soleil-infos .sep { margin: 0 0.45em; opacity: 0.6; }
 
-  /* --- Dial --- */
-  .dial-container {
+  /* --- Cadran -------------------------------------------------------------- */
+
+  .cadran {
     position: relative;
     width: 380px;
-    height: 380px;
-    margin-bottom: 2rem;
+    max-width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 1.2rem;
   }
+  .cadran svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
-  @media (max-width: 420px) {
-    .dial-container { width: 320px; height: 320px; }
-  }
-
-  .dial-container svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  .dial-center-text {
+  .centre {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
     pointer-events: none;
+    width: 62%;
   }
-
-  .dial-hour-label {
-    font-size: 1.15rem;
-    color: var(--brun);
-    line-height: 1.3;
+  .centre .nom { font-size: 1.05rem; line-height: 1.3; }
+  .centre .heure-civile {
+    font-size: 2.4rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    line-height: 1.15;
   }
+  .centre .detail { font-size: 0.78rem; color: var(--doux); }
 
-  .dial-time {
-    font-size: 2.2rem;
-    font-weight: normal;
-    letter-spacing: 0.05em;
-    color: var(--ocre-fonce);
+  .bande-jour { fill: var(--bande-jour); }
+  .bande-nuit { fill: var(--bande-nuit); }
+  .passe[data-p="jour"] { fill: var(--passe-jour); }
+  .passe[data-p="nuit"] { fill: var(--passe-nuit); }
+  .courant[data-p="jour"] { fill: var(--courant-jour); }
+  .courant[data-p="nuit"] { fill: var(--courant-nuit); }
+  .cadran circle.contour { fill: none; stroke: var(--filet); stroke-width: 1; }
+  .trait { stroke: var(--fond); stroke-width: 1.25; }
+  .trait.horizon { stroke: var(--soleil); stroke-width: 1.5; }
+  .chiffre {
+    font-family: Georgia, serif;
+    font-size: 10.5px;
+    text-anchor: middle;
+    dominant-baseline: central;
+    letter-spacing: 0.02em;
   }
+  .chiffre[data-p="jour"] { fill: var(--chiffre-jour); }
+  .chiffre[data-p="nuit"] { fill: var(--chiffre-nuit); }
+  .chiffre.actif { fill: var(--encre); font-weight: bold; }
+  .astre-soleil { fill: var(--soleil); }
+  .astre-halo { fill: none; stroke: var(--soleil); stroke-width: 0.75; opacity: 0.55; }
+  .astre-lune { fill: var(--lune); }
+  .astre-ombre { fill: var(--fond); transition: fill 1.2s ease; }
+  .repere { fill: none; stroke: var(--soleil); stroke-width: 1.2; }
 
-  .dial-sub {
-    font-size: 0.78rem;
-    color: var(--gris-chaud);
-    margin-top: 0.15rem;
-  }
+  /* --- Progression dans l'heure -------------------------------------------- */
 
-  body.night-mode .dial-hour-label { color: var(--sable); }
-  body.night-mode .dial-time { color: var(--or); }
-  body.night-mode .dial-sub { color: #8a9cc0; }
-
-  /* --- Clock panel (progress bar) --- */
-  .clock-panel {
-    max-width: 380px;
-    width: 100%;
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .progress-container {
-    background: rgba(0,0,0,0.08);
-    border-radius: 6px;
-    height: 8px;
-    width: 100%;
-    margin-bottom: 0.5rem;
+  .progression { width: 100%; max-width: 380px; text-align: center; margin-bottom: 2rem; }
+  .piste {
+    background: var(--piste);
+    border-radius: 3px;
+    height: 5px;
     overflow: hidden;
+    margin-bottom: 0.45rem;
   }
-
-  .progress-bar {
+  .piste div {
     height: 100%;
-    border-radius: 6px;
-    background: var(--ocre);
+    border-radius: 3px;
+    background: var(--soleil);
     transition: width 1s linear;
   }
+  :root[data-periode="nuit"] .piste div { background: var(--courant-nuit); }
+  .progression p { font-size: 0.8rem; color: var(--doux); }
 
-  body.night-mode .progress-bar { background: var(--or); }
+  /* --- Les vingt-quatre heures --------------------------------------------- */
 
-  .progress-label {
-    font-size: 0.8rem;
-    color: var(--gris-chaud);
-  }
-
-  body.night-mode .progress-label { color: #8a9cc0; }
-
-  /* --- Tables --- */
-  .tables-wrapper {
+  .tables {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 1.5rem 2.5rem;
     justify-content: center;
-    max-width: 960px;
     width: 100%;
+    max-width: 760px;
   }
-
-  .table-section {
-    flex: 1 1 400px;
-    max-width: 460px;
-  }
-
-  .table-section h2 {
-    font-size: 1rem;
+  .table { flex: 1 1 260px; max-width: 340px; }
+  .table h2 {
+    font-size: 0.9rem;
     font-weight: normal;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
     text-align: center;
   }
-
-  .table-section.day h2 { color: var(--ocre-fonce); }
-  .table-section.night h2 { color: var(--nuit-clair); }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-  }
-
-  th {
-    padding: 0.4rem 0.5rem;
-    text-align: left;
-    font-weight: normal;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .table.jour h2 { color: var(--titre-jour); }
+  .table.nuit h2 { color: var(--titre-nuit); }
+  .table .sous-titre {
     font-size: 0.75rem;
+    color: var(--doux);
+    text-align: center;
+    margin: 0.15rem 0 0.5rem;
   }
-
-  .table-section.day th {
-    background: var(--ocre);
-    color: var(--blanc-casse);
-  }
-
-  .table-section.night th {
-    background: var(--nuit);
-    color: var(--sable);
-  }
-
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
   td {
-    padding: 0.35rem 0.5rem;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    padding: 0.3rem 0.6rem;
+    border-bottom: 1px solid var(--filet-doux);
+    font-variant-numeric: tabular-nums;
   }
+  td:first-child { width: 3.2em; color: var(--doux); letter-spacing: 0.03em; }
+  td.fin { text-align: right; }
+  td .tiret { color: var(--doux); margin: 0 0.35em; }
+  tr.passee td { opacity: 0.45; }
+  tr.active td { background: var(--ligne-active); }
+  tr.active td:first-child { color: var(--encre); font-weight: bold; }
+  tr:first-child td { border-top: 1px solid var(--filet-doux); }
+  td, tr { transition: background-color 1.2s ease; }
+  tr td:first-child { border-radius: 3px 0 0 3px; }
+  tr td:last-child { border-radius: 0 3px 3px 0; }
 
-  .table-section.day tr:nth-child(even) td { background: rgba(200,160,110,0.08); }
-  .table-section.night tr:nth-child(even) td { background: rgba(45,74,122,0.06); }
-
-  .table-section.day tr.active td {
-    background: var(--ocre);
-    color: var(--blanc-casse);
-    font-weight: bold;
-  }
-
-  .table-section.night tr.active td {
-    background: var(--nuit-clair);
-    color: var(--sable);
-    font-weight: bold;
-  }
-
-  .footer {
-    margin-top: 2rem;
+  .pied {
+    margin-top: 2.2rem;
     font-size: 0.75rem;
-    color: var(--gris-chaud);
+    color: var(--doux);
     text-align: center;
+    line-height: 1.7;
   }
+  .pied a { color: inherit; text-decoration-color: var(--filet); text-underline-offset: 2px; }
+
+  .bascule { display: none; }
 
   @media (max-width: 500px) {
-    h1 { font-size: 1.2rem; }
-    .table-section { flex-basis: 100%; }
+    h1 { font-size: 1.25rem; }
+    .centre .heure-civile { font-size: 2rem; }
   }
+
+  /* ---------------------------------------------------------------------------
+   * Mode « barre » : la même page, à l'étroit dans le panneau qui descend de la
+   * barre des menus. Activé par l'app macOS, ou par ?barre dans l'adresse.
+   * ------------------------------------------------------------------------ */
+  :root.barre body { padding: 1.1rem 14px 1rem; min-height: 0; }
+  :root.barre h1, :root.barre .lieu, :root.barre .pied { display: none; }
+  :root.barre .date { font-size: 0.92rem; }
+  :root.barre .soleil-infos { font-size: 0.78rem; margin-bottom: 0.6rem; }
+  :root.barre .cadran { width: 300px; margin-bottom: 0.9rem; }
+  :root.barre .centre .nom { font-size: 0.95rem; }
+  :root.barre .centre .heure-civile { font-size: 2rem; }
+  :root.barre .progression { margin-bottom: 0.8rem; }
+  :root.barre .bascule {
+    display: block;
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--doux);
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--filet-doux);
+    width: 100%;
+    padding: 0.7rem 0 0.1rem;
+    cursor: pointer;
+  }
+  :root.barre .bascule:hover,
+  :root.barre .bascule:focus-visible { color: var(--accent); }
+  :root.barre .bascule:focus { outline: none; }
+  :root.barre .tables { display: none; gap: 1rem; margin-top: 0.8rem; }
+  :root.barre.ouvert .tables { display: flex; }
+  :root.barre .table { flex: 1 1 0; }
+  :root.barre table { font-size: 0.78rem; }
+  :root.barre td { padding: 0.22rem 0.3rem; }
+  :root.barre td:first-child { width: 2.6em; }
+  :root.barre .table h2 { font-size: 0.72rem; }
 </style>
 </head>
 <body>
-<h1>Heures Temporaires</h1>
-<p class="subtitle">Québec · 46.81°N 71.21°W</p>
 
-<div class="info-bar">
-  <span id="date-display"></span>
-  <span>&#9737; Lever : <strong id="sunrise-display">--:--</strong></span>
-  <span>&#9737; Coucher : <strong id="sunset-display">--:--</strong></span>
-</div>
+<h1>Heures temporaires</h1>
+<p class="lieu" id="lieu">Québec · 46,81° N · 71,21° O</p>
 
-<div class="dial-container">
-  <svg id="dial-svg" viewBox="0 0 400 400"></svg>
-  <div class="dial-center-text">
-    <div class="dial-hour-label" id="dial-hour-label">—</div>
-    <div class="dial-time" id="dial-time">--:--</div>
-    <div class="dial-sub" id="dial-sub"></div>
+<p class="date" id="date">—</p>
+<p class="soleil-infos" id="soleil-infos">&nbsp;</p>
+
+<div class="cadran">
+  <svg id="cadran" viewBox="0 0 400 400" role="img" aria-labelledby="nom-heure"></svg>
+  <div class="centre">
+    <div class="nom" id="nom-heure">—</div>
+    <div class="heure-civile" id="heure-civile">--:--</div>
+    <div class="detail" id="detail">&nbsp;</div>
   </div>
 </div>
 
-<div class="clock-panel">
-  <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
-  <div class="progress-label" id="progress-label"></div>
+<div class="progression">
+  <div class="piste"><div id="piste"></div></div>
+  <p id="progression">&nbsp;</p>
 </div>
 
-<div class="tables-wrapper">
-  <div class="table-section day">
-    <h2>Heures diurnes</h2>
-    <table>
-      <thead><tr><th>Heure</th><th>Début</th><th>Fin</th><th>Durée</th></tr></thead>
-      <tbody id="day-table"></tbody>
-    </table>
-  </div>
-  <div class="table-section night">
-    <h2>Heures nocturnes</h2>
-    <table>
-      <thead><tr><th>Heure</th><th>Début</th><th>Fin</th><th>Durée</th></tr></thead>
-      <tbody id="night-table"></tbody>
-    </table>
-  </div>
+<button class="bascule" id="bascule" type="button">Les vingt-quatre heures</button>
+
+<div class="tables">
+  <section class="table jour">
+    <h2>Heures du jour</h2>
+    <p class="sous-titre" id="st-jour"></p>
+    <table><tbody id="table-jour"></tbody></table>
+  </section>
+  <section class="table nuit">
+    <h2>Heures de la nuit</h2>
+    <p class="sous-titre" id="st-nuit"></p>
+    <table><tbody id="table-nuit"></tbody></table>
+  </section>
 </div>
 
-<p class="footer">Calcul solaire : algorithme NOAA · Heures temporaires à la manière antique</p>
+<p class="pied">
+  Calcul solaire : algorithme de la NOAA · Heures temporaires à la manière antique<br>
+  <a href="v1/">La version originale</a>
+</p>
 
+<script src="soleil.js"></script>
 <script>
 (function () {
-  const LAT = 46.8139;
-  const LNG = -71.2080;
-  const TZ_OFFSET = function () {
-    return -new Date().getTimezoneOffset() / 60;
-  };
+  'use strict';
 
-  // --- NOAA solar calculations ---
-  function toRad(d) { return d * Math.PI / 180; }
-  function toDeg(r) { return r * 180 / Math.PI; }
-
-  function julianDay(year, month, day) {
-    if (month <= 2) { year--; month += 12; }
-    var A = Math.floor(year / 100);
-    var B = 2 - A + Math.floor(A / 4);
-    return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
-  }
-
-  function julianCentury(jd) { return (jd - 2451545) / 36525; }
-
-  function geomMeanLongSun(T) {
-    var L = 280.46646 + T * (36000.76983 + 0.0003032 * T);
-    return ((L % 360) + 360) % 360;
-  }
-
-  function geomMeanAnomalySun(T) {
-    return 357.52911 + T * (35999.05029 - 0.0001537 * T);
-  }
-
-  function eccentEarthOrbit(T) {
-    return 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
-  }
-
-  function sunEqOfCenter(T) {
-    var M = toRad(geomMeanAnomalySun(T));
-    return Math.sin(M) * (1.914602 - T * (0.004817 + 0.000014 * T))
-         + Math.sin(2 * M) * (0.019993 - 0.000101 * T)
-         + Math.sin(3 * M) * 0.000289;
-  }
-
-  function sunTrueLong(T) { return geomMeanLongSun(T) + sunEqOfCenter(T); }
-
-  function sunApparentLong(T) {
-    var omega = 125.04 - 1934.136 * T;
-    return sunTrueLong(T) - 0.00569 - 0.00478 * Math.sin(toRad(omega));
-  }
-
-  function meanObliquityEcliptic(T) {
-    return 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
-  }
-
-  function obliquityCorrection(T) {
-    var omega = 125.04 - 1934.136 * T;
-    return meanObliquityEcliptic(T) + 0.00256 * Math.cos(toRad(omega));
-  }
-
-  function sunDeclination(T) {
-    var e = toRad(obliquityCorrection(T));
-    var lam = toRad(sunApparentLong(T));
-    return toDeg(Math.asin(Math.sin(e) * Math.sin(lam)));
-  }
-
-  function equationOfTime(T) {
-    var epsilon = toRad(obliquityCorrection(T));
-    var L0 = toRad(geomMeanLongSun(T));
-    var e = eccentEarthOrbit(T);
-    var M = toRad(geomMeanAnomalySun(T));
-    var y = Math.tan(epsilon / 2); var y2 = y * y;
-    return toDeg(y2 * Math.sin(2 * L0)
-      - 2 * e * Math.sin(M)
-      + 4 * e * y2 * Math.sin(M) * Math.cos(2 * L0)
-      - 0.5 * y2 * y2 * Math.sin(4 * L0)
-      - 1.25 * e * e * Math.sin(2 * M)) * 4;
-  }
-
-  function hourAngleSunrise(lat, decl) {
-    var latR = toRad(lat);
-    var dR = toRad(decl);
-    var HA = Math.acos(
-      (Math.cos(toRad(90.833)) / (Math.cos(latR) * Math.cos(dR))) - Math.tan(latR) * Math.tan(dR)
-    );
-    return toDeg(HA);
-  }
-
-  function calcSunEvent(year, month, day, lat, lng, tzOff, rising) {
-    var jd = julianDay(year, month, day);
-    var T = julianCentury(jd);
-    var eqTime = equationOfTime(T);
-    var decl = sunDeclination(T);
-    var ha = hourAngleSunrise(lat, decl);
-    var noon = 720 - 4 * lng - eqTime + tzOff * 60;
-    if (rising) return noon - ha * 4;
-    return noon + ha * 4;
-  }
-
-  function calcSunrise(year, month, day) {
-    return calcSunEvent(year, month, day, LAT, LNG, TZ_OFFSET(), true);
-  }
-
-  function calcSunset(year, month, day) {
-    return calcSunEvent(year, month, day, LAT, LNG, TZ_OFFSET(), false);
-  }
-
-  // --- Helpers ---
-  function minsToHM(m) {
-    var h = Math.floor(m / 60);
-    var mi = Math.floor(m % 60);
-    return String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0');
-  }
-
-  function minsToHMS(m) {
-    var h = Math.floor(m / 60);
-    var rest = m - h * 60;
-    var mi = Math.floor(rest);
-    var s = Math.floor((rest - mi) * 60);
-    return String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-  }
-
-  function ordinal(n) {
-    if (n === 1) return '1re';
-    return n + 'e';
-  }
-
-  var MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-
-  // --- SVG Dial ---
+  var LIEU = Soleil.QUEBEC;
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet',
+    'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   var NS = 'http://www.w3.org/2000/svg';
-  var CX = 200, CY = 200;
-  var R_OUTER = 185;    // outer ring
-  var R_INNER = 145;    // inner edge of hour band
-  var R_TICK_OUT = 186;
-  var R_TICK_IN = 175;
-  var R_LABEL = 163;
-  var R_MINOR_IN = 180;
+  var racine = document.documentElement;
 
-  function polarToXY(cx, cy, r, angleDeg) {
-    var rad = toRad(angleDeg - 90); // -90 so 0° = top
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  // L'app de la barre des menus pose window.HT_MODE avant le chargement.
+  var params = new URLSearchParams(location.search);
+  var barre = window.HT_MODE === 'barre' || params.has('barre');
+  if (barre) racine.classList.add('barre');
+
+  // ?t=2026-09-19T22:40 : faire comme s'il était cette heure-là (pour voir la
+  // nuit en plein jour, ou le solstice en septembre). Le temps avance ensuite.
+  var decalage = 0;
+  if (params.get('t')) {
+    var voulu = new Date(params.get('t')).getTime();
+    if (!isNaN(voulu)) decalage = voulu - Date.now();
+  }
+  function maintenant() { return Date.now() + decalage; }
+
+  // --- Formats -------------------------------------------------------------
+
+  function deux(n) { return String(n).padStart(2, '0'); }
+
+  /** Heure d'un événement, arrondie à la minute la plus proche (usage des éphémérides). */
+  function hm(ms) {
+    var d = new Date(Math.round(ms / 60000) * 60000);
+    return deux(d.getHours()) + ':' + deux(d.getMinutes());
   }
 
-  function describeArc(cx, cy, r, startAngle, endAngle) {
-    var s = polarToXY(cx, cy, r, startAngle);
-    var e = polarToXY(cx, cy, r, endAngle);
-    var sweep = endAngle - startAngle;
-    var largeArc = sweep > 180 ? 1 : 0;
-    return 'M ' + s.x + ' ' + s.y + ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' 1 ' + e.x + ' ' + e.y;
+  /** Heure affichée par l'horloge : tronquée, comme toute horloge. */
+  function horloge(ms) {
+    var d = new Date(ms);
+    return deux(d.getHours()) + ':' + deux(d.getMinutes());
   }
 
-  function describeAnnularSector(cx, cy, rOuter, rInner, startAngle, endAngle) {
-    var so = polarToXY(cx, cy, rOuter, startAngle);
-    var eo = polarToXY(cx, cy, rOuter, endAngle);
-    var ei = polarToXY(cx, cy, rInner, endAngle);
-    var si = polarToXY(cx, cy, rInner, startAngle);
-    var sweep = endAngle - startAngle;
-    var largeArc = sweep > 180 ? 1 : 0;
-    return 'M ' + so.x + ' ' + so.y
-      + ' A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 1 ' + eo.x + ' ' + eo.y
-      + ' L ' + ei.x + ' ' + ei.y
-      + ' A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 0 ' + si.x + ' ' + si.y
-      + ' Z';
+  function minutes(ms) {
+    return (ms / 60000).toFixed(1).replace('.', ',') + ' min';
   }
 
-  function svgEl(tag, attrs) {
-    var el = document.createElementNS(NS, tag);
-    for (var k in attrs) el.setAttribute(k, attrs[k]);
-    return el;
+  function duree(ms) {
+    var m = Math.round(ms / 60000);
+    return Math.floor(m / 60) + ' h ' + deux(m % 60);
   }
 
-  function buildDial(sunrise, sunset, sunriseNext, sunsetPrev, nowMins) {
-    var svg = document.getElementById('dial-svg');
-    svg.innerHTML = '';
+  function ecartJour(ms) {
+    var m = Math.round(ms / 60000);
+    if (m === 0) return 'comme hier';
+    return (m > 0 ? '+' : '−') + Math.abs(m) + ' min';
+  }
 
-    // Defs for gradients and glow
-    var defs = svgEl('defs', {});
+  // --- Géométrie du cadran -------------------------------------------------
 
-    // Day gradient
-    var gDay = svgEl('linearGradient', { id: 'gDay', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
-    gDay.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#e8c87a' }));
-    gDay.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#c4956a' }));
-    defs.appendChild(gDay);
+  var C = 200, R_EXT = 184, R_INT = 146, R_CHIFFRE = 165, R_ASTRE = 196;
 
-    // Night gradient
-    var gNight = svgEl('linearGradient', { id: 'gNight', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
-    gNight.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#1a2744' }));
-    gNight.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#2d4a7a' }));
-    defs.appendChild(gNight);
+  function point(r, deg) {
+    var a = (deg - 90) * Math.PI / 180;
+    return { x: C + r * Math.cos(a), y: C + r * Math.sin(a) };
+  }
 
-    // Glow filter for marker
-    var fGlow = svgEl('filter', { id: 'glow', x: '-50%', y: '-50%', width: '200%', height: '200%' });
-    var feG = svgEl('feGaussianBlur', { stdDeviation: '3', result: 'blur' });
-    fGlow.appendChild(feG);
-    var feMerge = svgEl('feMerge', {});
-    feMerge.appendChild(svgEl('feMergeNode', { 'in': 'blur' }));
-    feMerge.appendChild(svgEl('feMergeNode', { 'in': 'SourceGraphic' }));
-    fGlow.appendChild(feMerge);
-    defs.appendChild(fGlow);
+  function secteur(deg0, deg1) {
+    if (deg1 - deg0 >= 359.99) deg1 = deg0 + 359.99;
+    var grand = deg1 - deg0 > 180 ? 1 : 0;
+    var a = point(R_EXT, deg0), b = point(R_EXT, deg1);
+    var c = point(R_INT, deg1), d = point(R_INT, deg0);
+    return 'M' + a.x + ' ' + a.y + 'A' + R_EXT + ' ' + R_EXT + ' 0 ' + grand + ' 1 ' + b.x + ' ' + b.y
+      + 'L' + c.x + ' ' + c.y + 'A' + R_INT + ' ' + R_INT + ' 0 ' + grand + ' 0 ' + d.x + ' ' + d.y + 'Z';
+  }
 
-    // Swept arc glow
-    var fArc = svgEl('filter', { id: 'arcglow', x: '-10%', y: '-10%', width: '120%', height: '120%' });
-    fArc.appendChild(svgEl('feGaussianBlur', { stdDeviation: '2', result: 'blur' }));
-    var fm2 = svgEl('feMerge', {});
-    fm2.appendChild(svgEl('feMergeNode', { 'in': 'blur' }));
-    fm2.appendChild(svgEl('feMergeNode', { 'in': 'SourceGraphic' }));
-    fArc.appendChild(fm2);
-    defs.appendChild(fArc);
+  function el(nom, attrs, parent) {
+    var n = document.createElementNS(NS, nom);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
 
-    svg.appendChild(defs);
+  var svg = document.getElementById('cadran');
+  var passe, courant, astre;
 
-    // Total day in minutes
-    var totalDay = 1440;
-    var dayDuration = sunset - sunrise;
-    var nightDuration = totalDay - dayDuration;
+  /** Le fond du cadran : ne change qu'une fois par heure temporaire. */
+  function dessinerCadran(e) {
+    var deg = function (ms) { return Soleil.fraction(e, ms) * 360; };
+    var coucher = deg(e.cycle.coucher);
+    svg.textContent = '';
 
-    // Map: sunrise = top (0°), going clockwise
-    // Day occupies proportional arc, night the rest
-    var dayArcDeg = (dayDuration / totalDay) * 360;
-    var nightArcDeg = 360 - dayArcDeg;
+    el('path', { 'class': 'bande-jour', d: secteur(0, coucher) }, svg);
+    el('path', { 'class': 'bande-nuit', d: secteur(coucher, 360) }, svg);
+    passe = el('path', { 'class': 'passe', 'data-p': e.periode }, svg);
+    courant = el('path', { 'class': 'courant', 'data-p': e.periode }, svg);
 
-    // Day starts at 0° (top), ends at dayArcDeg
-    var dayStartAngle = 0;
-    var dayEndAngle = dayArcDeg;
-    var nightStartAngle = dayArcDeg;
-    var nightEndAngle = 360;
-
-    // Background circle
-    svg.appendChild(svgEl('circle', {
-      cx: CX, cy: CY, r: R_OUTER + 8,
-      fill: 'none', stroke: '#d5c4a8', 'stroke-width': '1', opacity: '0.5'
-    }));
-
-    // Outer ring
-    svg.appendChild(svgEl('circle', {
-      cx: CX, cy: CY, r: R_OUTER,
-      fill: 'none', stroke: '#bfa97e', 'stroke-width': '2'
-    }));
-
-    // Inner ring
-    svg.appendChild(svgEl('circle', {
-      cx: CX, cy: CY, r: R_INNER,
-      fill: 'none', stroke: '#bfa97e', 'stroke-width': '1', opacity: '0.5'
-    }));
-
-    // Day arc band
-    svg.appendChild(svgEl('path', {
-      d: describeAnnularSector(CX, CY, R_OUTER, R_INNER, dayStartAngle, dayEndAngle),
-      fill: 'url(#gDay)', opacity: '0.35'
-    }));
-
-    // Night arc band
-    svg.appendChild(svgEl('path', {
-      d: describeAnnularSector(CX, CY, R_OUTER, R_INNER, nightStartAngle, nightEndAngle - 0.01),
-      fill: 'url(#gNight)', opacity: '0.35'
-    }));
-
-    // --- Tick marks and labels ---
-    // Day: 12 hours
-    for (var i = 0; i <= 12; i++) {
-      var angle = dayStartAngle + (i / 12) * dayArcDeg;
-      var isMajor = true;
-      var p1 = polarToXY(CX, CY, R_TICK_OUT, angle);
-      var p2 = polarToXY(CX, CY, isMajor ? R_TICK_IN : R_MINOR_IN, angle);
-      var color = (i === 0 || i === 12) ? '#d4a843' : '#8b5e3c';
-      var width = (i === 0 || i === 12) ? '2.5' : '1.5';
-      svg.appendChild(svgEl('line', {
-        x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-        stroke: color, 'stroke-width': width, 'stroke-linecap': 'round'
-      }));
-
-      // Label (skip 0 and 12 — those are sunrise/sunset markers)
-      if (i > 0 && i < 12) {
-        var lp = polarToXY(CX, CY, R_LABEL, angle);
-        var txt = svgEl('text', {
-          x: lp.x, y: lp.y,
-          'text-anchor': 'middle', 'dominant-baseline': 'central',
-          'font-family': 'Georgia, serif', 'font-size': '11', fill: '#8b5e3c', opacity: '0.8'
-        });
-        txt.textContent = i;
-        svg.appendChild(txt);
+    // Les vingt-quatre divisions, et un chiffre au milieu de chaque heure.
+    var periodes = [
+      { p: 'jour', debut: e.cycle.debut, fin: e.cycle.coucher },
+      { p: 'nuit', debut: e.cycle.coucher, fin: e.cycle.fin }
+    ];
+    periodes.forEach(function (per) {
+      var pas = (per.fin - per.debut) / 12;
+      for (var i = 0; i < 12; i++) {
+        var a0 = deg(per.debut + i * pas);
+        if (i > 0) {
+          var p1 = point(R_INT, a0), p2 = point(R_EXT, a0);
+          el('line', { 'class': 'trait', x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }, svg);
+        }
+        var m = point(R_CHIFFRE, deg(per.debut + (i + 0.5) * pas));
+        var actif = per.p === e.periode && i === e.index;
+        var t = el('text', { 'class': 'chiffre' + (actif ? ' actif' : ''), 'data-p': per.p, x: m.x, y: m.y }, svg);
+        t.textContent = Soleil.ROMAINS[i];
       }
-    }
-
-    // Night: 12 hours
-    for (var i = 0; i <= 12; i++) {
-      var angle = nightStartAngle + (i / 12) * nightArcDeg;
-      if (angle >= 360) angle -= 360;
-      var p1 = polarToXY(CX, CY, R_TICK_OUT, angle);
-      var p2 = polarToXY(CX, CY, R_TICK_IN, angle);
-      var color = (i === 0 || i === 12) ? '#d4a843' : '#4a6a9a';
-      var width = (i === 0 || i === 12) ? '2.5' : '1.5';
-      // Don't double-draw at boundaries
-      if (i > 0 && i < 12) {
-        svg.appendChild(svgEl('line', {
-          x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-          stroke: color, 'stroke-width': width, 'stroke-linecap': 'round'
-        }));
-        var lp = polarToXY(CX, CY, R_LABEL, angle);
-        var txt = svgEl('text', {
-          x: lp.x, y: lp.y,
-          'text-anchor': 'middle', 'dominant-baseline': 'central',
-          'font-family': 'Georgia, serif', 'font-size': '11', fill: '#4a6a9a', opacity: '0.8'
-        });
-        txt.textContent = i;
-        svg.appendChild(txt);
-      }
-    }
-
-    // Sunrise / Sunset symbols
-    // Sunrise at top (0°)
-    var srP = polarToXY(CX, CY, R_OUTER + 14, 0);
-    var srTxt = svgEl('text', {
-      x: srP.x, y: srP.y,
-      'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-size': '16'
     });
-    srTxt.textContent = '\u2600'; // ☀
-    svg.appendChild(srTxt);
 
-    // Sunset at dayEndAngle
-    var ssP = polarToXY(CX, CY, R_OUTER + 14, dayEndAngle);
-    var ssTxt = svgEl('text', {
-      x: ssP.x, y: ssP.y,
-      'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-size': '14'
+    // Lever et coucher : un filet doré, et un petit repère à l'extérieur.
+    [0, coucher].forEach(function (a, n) {
+      var p1 = point(R_INT, a), p2 = point(R_EXT, a);
+      el('line', { 'class': 'trait horizon', x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }, svg);
     });
-    ssTxt.textContent = '\u263D'; // ☽
-    svg.appendChild(ssTxt);
 
-    // --- Current position marker ---
-    var currentAngle = 0;
-    var isDay = (nowMins >= sunrise && nowMins < sunset);
+    el('circle', { 'class': 'contour', cx: C, cy: C, r: R_EXT }, svg);
+    el('circle', { 'class': 'contour', cx: C, cy: C, r: R_INT }, svg);
 
-    if (isDay) {
-      var frac = (nowMins - sunrise) / dayDuration;
-      currentAngle = dayStartAngle + frac * dayArcDeg;
+    // L'astre du moment, qui fait le tour à l'extérieur de l'anneau.
+    astre = el('g', {}, svg);
+    if (e.periode === 'jour') {
+      el('circle', { 'class': 'astre-halo', r: 9.5 }, astre);
+      el('circle', { 'class': 'astre-soleil', r: 6 }, astre);
     } else {
-      // Night
-      var nightElapsed;
-      if (nowMins >= sunset) {
-        nightElapsed = nowMins - sunset;
-      } else {
-        // Before sunrise: from previous sunset
-        nightElapsed = (1440 - sunsetPrev) + nowMins;
-      }
-      var nightTotal = (nowMins >= sunset)
-        ? (1440 - sunset) + sunriseNext
-        : (1440 - sunsetPrev) + sunrise;
-      var frac = nightElapsed / nightTotal;
-      currentAngle = nightStartAngle + frac * nightArcDeg;
+      el('circle', { 'class': 'astre-lune', r: 6.5 }, astre);
+      el('circle', { 'class': 'astre-ombre', cx: 3.4, cy: -2.2, r: 5.4 }, astre);
     }
-    if (currentAngle >= 360) currentAngle -= 360;
-
-    // Swept arc (from start of current period to now)
-    var sweepStart = isDay ? dayStartAngle : nightStartAngle;
-    var sweepEnd = currentAngle;
-    if (sweepEnd < sweepStart) sweepEnd += 360;
-
-    var sweepColor = isDay ? '#d4a843' : '#6a8ec4';
-    svg.appendChild(svgEl('path', {
-      d: describeArc(CX, CY, (R_OUTER + R_INNER) / 2, sweepStart, sweepEnd > 359.9 ? 359.9 : sweepEnd),
-      fill: 'none', stroke: sweepColor, 'stroke-width': '3',
-      'stroke-linecap': 'round', opacity: '0.6', filter: 'url(#arcglow)'
-    }));
-
-    // Marker dot
-    var mp = polarToXY(CX, CY, (R_OUTER + R_INNER) / 2, currentAngle);
-    // Outer glow
-    svg.appendChild(svgEl('circle', {
-      cx: mp.x, cy: mp.y, r: '10',
-      fill: isDay ? '#d4a843' : '#6a8ec4', opacity: '0.2', filter: 'url(#glow)'
-    }));
-    // Ring
-    svg.appendChild(svgEl('circle', {
-      cx: mp.x, cy: mp.y, r: '7',
-      fill: 'none', stroke: isDay ? '#d4a843' : '#8aaed4', 'stroke-width': '2'
-    }));
-    // Dot
-    svg.appendChild(svgEl('circle', {
-      cx: mp.x, cy: mp.y, r: '3',
-      fill: isDay ? '#fff' : '#c0d4f0'
-    }));
-
-    // Inner decorative circle
-    svg.appendChild(svgEl('circle', {
-      cx: CX, cy: CY, r: R_INNER - 15,
-      fill: 'none', stroke: '#bfa97e', 'stroke-width': '0.5', opacity: '0.3',
-      'stroke-dasharray': '2 4'
-    }));
   }
 
-  // --- Main ---
-  function update() {
-    var now = new Date();
-    var Y = now.getFullYear(), M = now.getMonth() + 1, D = now.getDate();
+  /** Ce qui bouge à chaque seconde : l'astre et les deux aplats d'avancement. */
+  function avancerCadran(e) {
+    var deg = function (ms) { return Soleil.fraction(e, ms) * 360; };
+    var ici = deg(e.instant);
+    passe.setAttribute('d', ici - deg(e.debutPeriode) > 0.05 ? secteur(deg(e.debutPeriode), ici) : '');
+    courant.setAttribute('d', ici - deg(e.debutHeure) > 0.05 ? secteur(deg(e.debutHeure), ici) : '');
+    var p = point(R_ASTRE, ici);
+    astre.setAttribute('transform', 'translate(' + p.x.toFixed(2) + ' ' + p.y.toFixed(2) + ')');
+  }
 
-    var sunrise = calcSunrise(Y, M, D);
-    var sunset = calcSunset(Y, M, D);
-    var nextDay = new Date(Y, M - 1, D + 1);
-    var sunriseNext = calcSunrise(nextDay.getFullYear(), nextDay.getMonth() + 1, nextDay.getDate());
-    var prevDay = new Date(Y, M - 1, D - 1);
-    var sunsetPrev = calcSunset(prevDay.getFullYear(), prevDay.getMonth() + 1, prevDay.getDate());
+  // --- Tables --------------------------------------------------------------
 
-    var dayDuration = sunset - sunrise;
-    var nightDurationEvening = (1440 - sunset) + sunriseNext;
-    var nightDurationMorning = (1440 - sunsetPrev) + sunrise;
-
-    var dayHourLen = dayDuration / 12;
-    var nightHourLenEvening = nightDurationEvening / 12;
-    var nightHourLenMorning = nightDurationMorning / 12;
-
-    var nowMins = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-
-    // Display date
-    document.getElementById('date-display').textContent =
-      D + ' ' + MONTHS[M - 1] + ' ' + Y;
-    document.getElementById('sunrise-display').textContent = minsToHM(sunrise);
-    document.getElementById('sunset-display').textContent = minsToHM(sunset);
-
-    // Build dial
-    buildDial(sunrise, sunset, sunriseNext, sunsetPrev, nowMins);
-
-    // Build day table
-    var dayTbody = document.getElementById('day-table');
-    dayTbody.innerHTML = '';
-    var activeDay = -1;
-    for (var i = 0; i < 12; i++) {
-      var start = sunrise + i * dayHourLen;
-      var end = start + dayHourLen;
-      if (nowMins >= start && nowMins < end) activeDay = i;
+  function remplir(tbody, heures, periode, e) {
+    tbody.textContent = '';
+    heures.forEach(function (h, i) {
       var tr = document.createElement('tr');
-      if (activeDay === i) tr.className = 'active';
-      tr.innerHTML = '<td>' + ordinal(i + 1) + '</td><td>' + minsToHMS(start) + '</td><td>' + minsToHMS(end) + '</td><td>' + dayHourLen.toFixed(1) + ' min</td>';
-      dayTbody.appendChild(tr);
-    }
-
-    // Build night table
-    var nightTbody = document.getElementById('night-table');
-    nightTbody.innerHTML = '';
-    var activeNight = -1;
-    var isPreSunrise = nowMins < sunrise;
-    var isPostSunset = nowMins >= sunset;
-
-    if (isPostSunset) {
-      for (var i = 0; i < 12; i++) {
-        var start = sunset + i * nightHourLenEvening;
-        var end = start + nightHourLenEvening;
-        var startDisplay = start >= 1440 ? start - 1440 : start;
-        var endDisplay = end >= 1440 ? end - 1440 : end;
-        if (nowMins >= start && nowMins < end) activeNight = i;
-        var tr = document.createElement('tr');
-        if (activeNight === i) tr.className = 'active';
-        tr.innerHTML = '<td>' + ordinal(i + 1) + '</td><td>' + minsToHMS(startDisplay) + '</td><td>' + minsToHMS(endDisplay) + '</td><td>' + nightHourLenEvening.toFixed(1) + ' min</td>';
-        nightTbody.appendChild(tr);
-      }
-    } else if (isPreSunrise) {
-      for (var i = 0; i < 12; i++) {
-        var start = sunsetPrev + i * nightHourLenMorning;
-        var end = start + nightHourLenMorning;
-        var startDisplay = start >= 1440 ? start - 1440 : start;
-        var endDisplay = end >= 1440 ? end - 1440 : end;
-        var nowCheck = nowMins + 1440;
-        if (nowCheck >= start && nowCheck < end) activeNight = i;
-        var tr = document.createElement('tr');
-        if (activeNight === i) tr.className = 'active';
-        tr.innerHTML = '<td>' + ordinal(i + 1) + '</td><td>' + minsToHMS(startDisplay) + '</td><td>' + minsToHMS(endDisplay) + '</td><td>' + nightHourLenMorning.toFixed(1) + ' min</td>';
-        nightTbody.appendChild(tr);
-      }
-    } else {
-      for (var i = 0; i < 12; i++) {
-        var start = sunset + i * nightHourLenEvening;
-        var end = start + nightHourLenEvening;
-        var startDisplay = start >= 1440 ? start - 1440 : start;
-        var endDisplay = end >= 1440 ? end - 1440 : end;
-        var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + ordinal(i + 1) + '</td><td>' + minsToHMS(startDisplay) + '</td><td>' + minsToHMS(endDisplay) + '</td><td>' + nightHourLenEvening.toFixed(1) + ' min</td>';
-        nightTbody.appendChild(tr);
-      }
-    }
-
-    // Clock panel
-    var currentLabel = '';
-    var progress = 0;
-    var hourLen = 0;
-    var isNight = false;
-
-    if (nowMins >= sunrise && nowMins < sunset) {
-      var idx = Math.floor((nowMins - sunrise) / dayHourLen);
-      var hourStart = sunrise + idx * dayHourLen;
-      progress = (nowMins - hourStart) / dayHourLen;
-      currentLabel = ordinal(idx + 1) + ' heure du jour';
-      hourLen = dayHourLen;
-    } else {
-      isNight = true;
-      if (nowMins >= sunset) {
-        var elapsed = nowMins - sunset;
-        var idx = Math.min(Math.floor(elapsed / nightHourLenEvening), 11);
-        var hourStart = sunset + idx * nightHourLenEvening;
-        progress = (nowMins - hourStart) / nightHourLenEvening;
-        currentLabel = ordinal(idx + 1) + ' heure de la nuit';
-        hourLen = nightHourLenEvening;
-      } else {
-        var elapsed = nowMins + 1440 - sunsetPrev;
-        var idx = Math.min(Math.floor(elapsed / nightHourLenMorning), 11);
-        var hourStart = sunsetPrev + idx * nightHourLenMorning;
-        var nowShifted = nowMins + 1440;
-        progress = (nowShifted - hourStart) / nightHourLenMorning;
-        currentLabel = ordinal(idx + 1) + ' heure de la nuit';
-        hourLen = nightHourLenMorning;
-      }
-    }
-
-    // Dial center text
-    document.getElementById('dial-hour-label').textContent = currentLabel;
-    document.getElementById('dial-time').textContent = minsToHM(nowMins);
-    document.getElementById('dial-sub').textContent =
-      '1 h. temp. = ' + hourLen.toFixed(1) + ' min';
-
-    // Progress bar
-    document.getElementById('progress-bar').style.width = (progress * 100).toFixed(1) + '%';
-    document.getElementById('progress-label').textContent =
-      Math.floor(progress * 100) + ' % de l\u2019heure écoulé';
-
-    // Night mode
-    if (isNight) {
-      document.body.classList.add('night-mode');
-    } else {
-      document.body.classList.remove('night-mode');
-    }
+      if (e.instant >= h.fin) tr.className = 'passee';
+      if (periode === e.periode && i === e.index) tr.className = 'active';
+      tr.innerHTML = '<td>' + Soleil.ROMAINS[i] + '</td>'
+        + '<td>' + hm(h.debut) + '<span class="tiret">–</span>' + hm(h.fin) + '</td>';
+      tbody.appendChild(tr);
+    });
   }
 
-  update();
-  setInterval(update, 1000);
+  // --- Boucle --------------------------------------------------------------
+
+  var $ = function (id) { return document.getElementById(id); };
+  var cleCadran = '', cleJour = '';
+
+  function texte(id, valeur) {
+    var n = $(id);
+    if (n.textContent !== valeur) n.textContent = valeur;
+  }
+
+  function maj() {
+    var e;
+    try { e = Soleil.etat(maintenant(), LIEU); }
+    catch (err) { texte('nom-heure', err.message); return; }
+
+    var d = new Date(e.instant);
+
+    // Une fois par jour
+    var jour = d.toDateString();
+    if (jour !== cleJour) {
+      cleJour = jour;
+      texte('date', JOURS[d.getDay()].replace(/^./, function (c) { return c.toUpperCase(); })
+        + ' ' + (d.getDate() === 1 ? '1er' : d.getDate()) + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear());
+      $('soleil-infos').innerHTML = 'Lever <strong>' + hm(e.aujourdhui.lever) + '</strong>'
+        + '<span class="sep">·</span>Coucher <strong>' + hm(e.aujourdhui.coucher) + '</strong>'
+        + '<span class="sep">·</span>Jour de ' + duree(e.dureeJour)
+        + ' <span title="par rapport à hier">(' + ecartJour(e.dureeJour - e.dureeJourHier) + ')</span>';
+    }
+
+    // Une fois par heure temporaire
+    var cle = e.periode + e.index + e.cycle.debut;
+    if (cle !== cleCadran) {
+      cleCadran = cle;
+      racine.setAttribute('data-periode', e.periode);
+      dessinerCadran(e);
+      remplir($('table-jour'), e.heuresJour, 'jour', e);
+      remplir($('table-nuit'), e.heuresNuit, 'nuit', e);
+      texte('st-jour', '12 × ' + minutes(e.heuresJour[0].fin - e.heuresJour[0].debut));
+      texte('st-nuit', '12 × ' + minutes(e.heuresNuit[0].fin - e.heuresNuit[0].debut));
+      texte('nom-heure', e.nom);
+      texte('detail', 'jusqu’à ' + hm(e.finHeure) + ' · ' + minutes(e.dureeHeure));
+      document.title = e.romain + ' — Heures temporaires';
+      $('piste').style.transition = 'none';          // pas de recul animé au changement d'heure
+      signalerHauteur();
+    }
+
+    // À chaque seconde
+    avancerCadran(e);
+    texte('heure-civile', horloge(e.instant));
+    var piste = $('piste');
+    piste.style.width = (e.progression * 100).toFixed(2) + '%';
+    if (piste.style.transition === 'none') {
+      piste.offsetWidth;                               // forcer le rendu avant de rétablir l'animation
+      piste.style.transition = '';
+    }
+    var reste = Math.ceil((e.finHeure - e.instant) / 60000);
+    texte('progression', Math.floor(e.progression * 100) + ' % de l’heure écoulée · encore '
+      + reste + ' min');
+  }
+
+  // --- Dialogue avec l'app de la barre des menus ---------------------------
+
+  function signaler(message) {
+    var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.barre;
+    if (h) h.postMessage(message);
+  }
+  function signalerHauteur() {
+    if (barre) requestAnimationFrame(function () {
+      signaler({ hauteur: Math.ceil(document.body.getBoundingClientRect().height) });
+    });
+  }
+
+  $('bascule').addEventListener('click', function () {
+    racine.classList.toggle('ouvert');
+    this.textContent = racine.classList.contains('ouvert') ? 'Refermer' : 'Les vingt-quatre heures';
+    signalerHauteur();
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') signaler({ fermer: true });
+    if (barre && (ev.key === ' ' || ev.key === 'Enter')) { ev.preventDefault(); $('bascule').click(); }
+  });
+
+  // L'app appelle HT.maj() quand le panneau réapparaît, pour ne pas montrer
+  // une seconde périmée pendant que les minuteries reprennent.
+  window.HT = { maj: maj };
+
+  maj();
+  setInterval(maj, 1000);
 })();
 </script>
 </body>
